@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Krypton Client</title>
+<meta name="description" content="Krypton — a fast, clean Minecraft client built for performance and control.">
+<link rel="icon" href="assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,600;0,800;1,800;1,900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --bg-2: #131316;
+    --card: #17171b;
+    --line: #25252b;
+    --text: #e9edf2;
+    --muted: #8b93a1;
+    --blue-1: #00d2ff;
+    --blue-2: #0a84ff;
+    --grad: linear-gradient(180deg, var(--blue-1), var(--blue-2));
+    --grad-x: linear-gradient(90deg, var(--blue-1), var(--blue-2));
+    --glow: 0 0 40px rgba(0, 170, 255, .35);
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  .wrap { width: min(1140px, 100% - 32px); margin-inline: auto; }
+  h1, h2, h3, .brand { font-family: "Exo 2", sans-serif; }
+  .grad-text { background: var(--grad-x); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* background */
+  #bg { position: fixed; inset: 0; z-index: -2; }
+  .grid-fade {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 30%, transparent 75%);
+  }
+
+  /* nav */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: rgba(13,13,15,.7);
+    border-bottom: 1px solid transparent;
+    transition: border-color .3s;
+  }
+  nav.scrolled { border-color: var(--line); }
+  .nav-in { display: flex; align-items: center; justify-content: space-between; height: 68px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-style: italic; font-size: 22px; letter-spacing: .5px; }
+  .brand img { width: 36px; height: 36px; border-radius: 9px; }
+  .links { display: flex; gap: 30px; font-size: 15px; color: var(--muted); }
+  .links a:hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 12px 22px; border-radius: 10px; font-weight: 600; font-size: 15px;
+    transition: transform .15s, box-shadow .2s, background .2s;
+    cursor: pointer; border: 0; font-family: inherit;
+  }
+  .btn-primary { background: var(--grad-x); color: #fff; box-shadow: 0 6px 24px rgba(0,140,255,.35); }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 34px rgba(0,160,255,.5); }
+  .btn-ghost { background: var(--card); border: 1px solid var(--line); color: var(--text); }
+  .btn-ghost:hover { border-color: #3a3a44; transform: translateY(-2px); }
+  .btn-sm { padding: 9px 16px; font-size: 14px; }
+  .menu-btn { display: none; background: none; border: 0; color: var(--text); cursor: pointer; }
+
+  /* hero */
+  .hero { padding: 90px 0 70px; text-align: center; position: relative; }
+  .hero-logo {
+    width: 180px; height: 180px; margin: 0 auto 34px; border-radius: 38px;
+    position: relative; animation: float 6s ease-in-out infinite;
+  }
+  .hero-logo img { width: 100%; height: 100%; border-radius: inherit; position: relative; z-index: 1; border: 1px solid #222; }
+  .hero-logo::before {
+    content: ""; position: absolute; inset: -30px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,170,255,.45), transparent 65%);
+    filter: blur(20px); animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes float { 50% { transform: translateY(-12px); } }
+  @keyframes pulse { 50% { opacity: .55; transform: scale(.92); } }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 99px; font-size: 13px; color: var(--muted);
+    background: var(--card); border: 1px solid var(--line); margin-bottom: 22px;
+  }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; background: #2bd96b; box-shadow: 0 0 10px #2bd96b; }
+  .hero h1 {
+    font-size: clamp(48px, 9vw, 104px); font-weight: 900; font-style: italic;
+    line-height: .95; letter-spacing: -1px; margin-bottom: 22px;
+  }
+  .hero p { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 580px; margin: 0 auto 36px; }
+  .hero-cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    margin-top: 80px; background: var(--line); border: 1px solid var(--line);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .stat { background: var(--bg-2); padding: 26px 16px; }
+  .stat b { display: block; font-family: "Exo 2"; font-size: 32px; font-weight: 800; font-style: italic; }
+  .stat span { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.2px; }
+
+  /* sections */
+  section { padding: 100px 0; }
+  .sec-head { text-align: center; margin-bottom: 56px; }
+  .eyebrow { font-size: 13px; letter-spacing: 2.5px; text-transform: uppercase; font-weight: 600; color: var(--blue-1); margin-bottom: 12px; }
+  .sec-head h2 { font-size: clamp(32px, 5vw, 50px); font-weight: 800; font-style: italic; line-height: 1.1; }
+  .sec-head p { color: var(--muted); max-width: 540px; margin: 14px auto 0; }
+
+  .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 28px; position: relative; overflow: hidden; transition: border-color .25s, transform .25s;
+  }
+  .feature::after {
+    content: ""; position: absolute; inset: 0; opacity: 0; transition: opacity .3s;
+    background: radial-gradient(400px circle at var(--mx, 50%) var(--my, 0%), rgba(0,170,255,.12), transparent 50%);
+    pointer-events: none;
+  }
+  .feature:hover { border-color: #2c3b4f; transform: translateY(-4px); }
+  .feature:hover::after { opacity: 1; }
+  .icon {
+    width: 46px; height: 46px; border-radius: 11px; display: grid; place-items: center; margin-bottom: 18px;
+    background: rgba(0,160,255,.1); border: 1px solid rgba(0,160,255,.25); color: var(--blue-1);
+  }
+  .icon svg { width: 22px; height: 22px; }
+  .feature h3 { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+  .feature p { color: var(--muted); font-size: 15px; }
+
+  /* gui showcase */
+  .showcase { display: grid; grid-template-columns: 1fr 1.15fr; gap: 56px; align-items: center; }
+  .showcase h2 { font-size: clamp(30px, 4.5vw, 46px); font-weight: 800; font-style: italic; line-height: 1.1; margin-bottom: 18px; }
+  .showcase p { color: var(--muted); margin-bottom: 26px; }
+  .checks { list-style: none; display: grid; gap: 12px; margin-bottom: 30px; }
+  .checks li { display: flex; gap: 12px; align-items: center; }
+  .checks li::before {
+    content: ""; flex: none; width: 20px; height: 20px; border-radius: 6px; background: var(--grad);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z'/%3E%3C/svg%3E") center/16px no-repeat, linear-gradient(#000,#000);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+  }
+  .gui {
+    background: #0f0f12; border: 1px solid var(--line); border-radius: 16px; padding: 18px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.6), var(--glow);
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+  .panel-h {
+    padding: 10px 12px; font-family: "Exo 2"; font-weight: 800; font-style: italic; font-size: 14px;
+    background: linear-gradient(90deg, rgba(0,210,255,.18), rgba(10,132,255,.08)); border-bottom: 1px solid var(--line);
+  }
+  .mod {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 9px 12px; font-size: 13px; color: var(--muted); cursor: pointer; user-select: none;
+    transition: background .15s, color .15s;
+  }
+  .mod:hover { background: rgba(255,255,255,.03); }
+  .mod.on { color: var(--text); }
+  .toggle { width: 26px; height: 14px; border-radius: 99px; background: #2a2a31; position: relative; transition: background .2s; flex: none; }
+  .toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: #666; transition: transform .2s, background .2s; }
+  .mod.on .toggle { background: var(--grad-x); }
+  .mod.on .toggle::after { transform: translateX(12px); background: #fff; }
+
+  /* download */
+  .download {
+    position: relative; text-align: center; padding: 70px 30px; border-radius: 22px;
+    background: radial-gradient(ellipse at top, rgba(0,160,255,.18), transparent 70%), var(--bg-2);
+    border: 1px solid var(--line); overflow: hidden;
+  }
+  .download h2 { font-size: clamp(34px, 5.5vw, 58px); font-weight: 900; font-style: italic; line-height: 1.05; margin-bottom: 16px; }
+  .download p { color: var(--muted); max-width: 500px; margin: 0 auto 32px; }
+  .dl-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .meta { margin-top: 22px; font-size: 13px; color: var(--muted); }
+  .meta span { margin: 0 8px; }
+
+  /* faq */
+  .faq { max-width: 760px; margin-inline: auto; display: grid; gap: 12px; }
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 0 22px; transition: border-color .2s; }
+  details[open] { border-color: #2c3b4f; }
+  summary { list-style: none; cursor: pointer; padding: 20px 0; font-weight: 600; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-size: 22px; color: var(--blue-1); transition: transform .25s; flex: none; }
+  details[open] summary::after { transform: rotate(45deg); }
+  details p { color: var(--muted); padding-bottom: 20px; }
+
+  footer { border-top: 1px solid var(--line); padding: 36px 0; color: var(--muted); font-size: 14px; }
+  .foot-in { display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; }
+  .foot-links { display: flex; gap: 22px; }
+  .foot-links a:hover { color: var(--text); }
+
+  /* reveal */
+  .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  @media (max-width: 900px) {
+    .features { grid-template-columns: 1fr 1fr; }
+    .showcase { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .links { display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0;
+      background: rgba(13,13,15,.97); border-bottom: 1px solid var(--line); }
+    .links.open { display: flex; }
+    .links a { padding: 16px; border-top: 1px solid var(--line); }
+    .menu-btn { display: block; }
+    .nav-cta { display: none; }
+    .features { grid-template-columns: 1fr; }
+    .gui { grid-template-columns: 1fr; }
+    .hero { padding-top: 60px; }
+    .hero-logo { width: 140px; height: 140px; border-radius: 30px; }
+    section { padding: 72px 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before { animation: none !important; transition: none !important; }
+    .reveal { opacity: 1; transform: none; }
+  }
+</style>
+</head>
+<body>
+<canvas id="bg"></canvas>
+<div class="grid-fade"></div>
+
+<nav id="nav">
+  <div class="wrap nav-in">
+    <a href="#" class="brand"><img src="assets/logo.png" alt="">Krypton</a>
+    <div class="links" id="links">
+      <a href="#features">Features</a>
+      <a href="#modules">Modules</a>
+      <a href="#download">Download</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <a href="#download" class="btn btn-primary btn-sm nav-cta">Download</a>
+    <button class="menu-btn" id="menuBtn" aria-label="Menu">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </button>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="hero-logo"><img src="assets/logo.png" alt="Krypton logo"></div>
+    <div class="pill"><span class="dot"></span>Now available for Fabric 1.21.x</div>
+    <h1>Built different.<br><span class="grad-text">Krypton Client.</span></h1>
+    <p>A fast, clean Minecraft client with smooth FPS, a slick ClickGUI and everything you need in one place.</p>
+    <div class="hero-cta">
+      <a href="#download" class="btn btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
+        Download Krypton
+      </a>
+      <a href="#features" class="btn btn-ghost">See features</a>
+    </div>
+    <div class="stats reveal">
+      <div class="stat"><b class="grad-text" data-count="60">0</b><span>Modules</span></div>
+      <div class="stat"><b class="grad-text" data-count="2" data-suffix="x">0</b><span>FPS boost</span></div>
+      <div class="stat"><b class="grad-text" data-count="0" data-suffix="ms">0</b><span>Input delay</span></div>
+      <div class="stat"><b class="grad-text">Free</b><span>Forever</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">Features</div>
+      <h2>Everything you need.<br>Nothing you don't.</h2>
+      <p>Krypton keeps things lightweight and quick, so you spend less time fiddling and more time playing.</p>
+    </div>
+    <div class="features">
+      <div class="feature reveal">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div>
+        <h3>Lightning fast</h3>
+        <p>Optimized rendering and smart caching keep your frames high and your game smooth, even on low-end PCs.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+        <h3>Clean ClickGUI</h3>
+        <p>Every module is one click away. Drag panels, search instantly and tweak settings without leaving the game.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg></div>
+        <h3>Custom HUD</h3>
+        <p>Place your FPS, coords, armor, keystrokes and more anywhere on screen. Make it yours.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h10M4 17h6M18 7h2M14 17h6"/><circle cx="16" cy="7" r="2"/><circle cx="12" cy="17" r="2"/></svg></div>
+        <h3>Config profiles</h3>
+        <p>Save setups for different servers and switch between them instantly. Share configs with friends.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 4 5v6c0 5 3.4 9.3 8 11 4.6-1.7 8-6 8-11V5z"/></svg></div>
+        <h3>Stable & safe</h3>
+        <p>Tested on every release. Krypton is built to stay out of your way and never crash your game.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+        <h3>Auto updates</h3>
+        <p>New features and fixes land automatically. Always on the latest version without lifting a finger.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="modules">
+  <div class="wrap showcase">
+    <div class="reveal">
+      <div class="eyebrow">Modules</div>
+      <h2>Toggle anything.<br><span class="grad-text">In a click.</span></h2>
+      <p>Open the ClickGUI with Right Shift and you're in control. Try it — click the modules on the right.</p>
+      <ul class="checks">
+        <li>Organized into clean categories</li>
+        <li>Keybind any module</li>
+        <li>Per-module settings and sliders</li>
+      </ul>
+      <a href="#download" class="btn btn-primary">Get Krypton</a>
+    </div>
+    <div class="gui reveal" id="gui"></div>
+  </div>
+</section>
+
+<section id="download">
+  <div class="wrap">
+    <div class="download reveal">
+      <div class="eyebrow">Download</div>
+      <h2>Ready to <span class="grad-text">level up?</span></h2>
+      <p>Drop the .jar in your mods folder and launch. That's it.</p>
+      <div class="dl-row">
+        <!-- Put your mod at krypton-site/downloads/Krypton.jar (or change this href to a hosted link) -->
+        <a href="downloads/Krypton.jar" download class="btn btn-primary" id="dlBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
+          Download Krypton (.jar)
+        </a>
+        <a href="#" class="btn btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.4 18.4 0 0 0-5.6 0L8.6 3a19.7 19.7 0 0 0-4.9 1.4C.5 9.1-.3 13.6.1 18.1a19.9 19.9 0 0 0 6 3l1.3-2a13 13 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4a13 13 0 0 1-2 1l1.3 2a19.8 19.8 0 0 0 6-3c.5-5.2-.8-9.7-3.6-13.7zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z"/></svg>
+          Join Discord
+        </a>
+      </div>
+      <div class="meta">Fabric<span>•</span>Minecraft 1.21.x<span>•</span>Free</div>
+      <div class="meta" id="dlNote" hidden style="color:#ffb547">The download isn't up yet — check back soon or join the Discord.</div>
+    </div>
+  </div>
+</section>
+
+<section id="faq" style="padding-top:20px">
+  <div class="wrap">
+    <div class="sec-head reveal">
+      <div class="eyebrow">FAQ</div>
+      <h2>Questions?</h2>
+    </div>
+    <div class="faq">
+      <details class="reveal"><summary>How do I install Krypton?</summary><p>Install Fabric Loader for your Minecraft version, download the Krypton .jar and drop it into your <code>.minecraft/mods</code> folder. Launch the Fabric profile and you're good to go.</p></details>
+      <details class="reveal"><summary>Is Krypton free?</summary><p>Yes. Krypton is completely free to download and use.</p></details>
+      <details class="reveal"><summary>How do I open the menu?</summary><p>Press Right Shift in game to open the ClickGUI. You can change this keybind in the settings.</p></details>
+      <details class="reveal"><summary>Does it work with other mods?</summary><p>Krypton plays nicely with most popular Fabric mods like Sodium and Iris.</p></details>
+      <details class="reveal"><summary>Where can I report bugs or suggest features?</summary><p>Join the Discord server — we read every suggestion and bug report.</p></details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <a href="#" class="brand" style="font-size:18px"><img src="assets/logo.png" alt="" style="width:28px;height:28px;border-radius:7px">Krypton</a>
+    <div class="foot-links">
+      <a href="#features">Features</a>
+      <a href="#download">Download</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div>© <span id="yr"></span> Krypton Client. Not affiliated with Mojang or Microsoft.</div>
+  </div>
+</footer>
+
+<script>
+  // year
+  document.getElementById('yr').textContent = new Date().getFullYear();
+
+  // nav
+  const nav = document.getElementById('nav');
+  addEventListener('scroll', () => nav.classList.toggle('scrolled', scrollY > 10), { passive: true });
+  const links = document.getElementById('links');
+  document.getElementById('menuBtn').onclick = () => links.classList.toggle('open');
+  links.querySelectorAll('a').forEach(a => a.onclick = () => links.classList.remove('open'));
+
+  // jar download: if the file isn't there yet, show a note instead of a 404
+  const dlBtn = document.getElementById('dlBtn');
+  dlBtn.addEventListener('click', async e => {
+    if (!dlBtn.getAttribute('href').startsWith('downloads/')) return; // external link, just follow it
+    e.preventDefault();
+    try {
+      const r = await fetch(dlBtn.href, { method: 'HEAD' });
+      if (r.ok) { location.href = dlBtn.href; return; }
+    } catch {}
+    document.getElementById('dlNote').hidden = false;
+  });
+
+  // ClickGUI demo
+  const cats = {
+    Combat: [['Hitboxes', 0], ['Reach Display', 1], ['Combo Counter', 1], ['Hit Color', 0], ['Crosshair', 1]],
+    Render: [['Fullbright', 1], ['Zoom', 1], ['Block Outline', 0], ['Item Physics', 0], ['Motion Blur', 0]],
+    HUD:    [['FPS', 1], ['Coordinates', 1], ['Keystrokes', 0], ['Armor Status', 1], ['CPS', 0]],
+  };
+  const gui = document.getElementById('gui');
+  for (const [name, mods] of Object.entries(cats)) {
+    const p = document.createElement('div');
+    p.className = 'panel';
+    p.innerHTML = `<div class="panel-h">${name}</div>` +
+      mods.map(([m, on]) => `<div class="mod${on ? ' on' : ''}"><span>${m}</span><span class="toggle"></span></div>`).join('');
+    gui.appendChild(p);
+  }
+  gui.addEventListener('click', e => { const m = e.target.closest('.mod'); if (m) m.classList.toggle('on'); });
+
+  // card spotlight
+  document.querySelectorAll('.feature').forEach(f => f.addEventListener('pointermove', e => {
+    const r = f.getBoundingClientRect();
+    f.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+    f.style.setProperty('--my', (e.clientY - r.top) + 'px');
+  }));
+
+  // reveal + counters
+  const countUp = el => {
+    const target = +el.dataset.count, suf = el.dataset.suffix || '', t0 = performance.now();
+    const step = t => {
+      const k = Math.min((t - t0) / 1200, 1), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = Math.round(target * e) + (target >= 60 && k === 1 ? '+' : '') + suf;
+      if (k < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+  const io = new IntersectionObserver(entries => entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    en.target.classList.add('in');
+    en.target.querySelectorAll('[data-count]').forEach(countUp);
+    io.unobserve(en.target);
+  }), { threshold: .15 });
+  document.querySelectorAll('.reveal').forEach((el, i) => {
+    el.style.transitionDelay = (el.classList.contains('feature') ? (i % 3) * 80 : 0) + 'ms';
+    io.observe(el);
+  });
+
+  // particle background
+  const c = document.getElementById('bg'), ctx = c.getContext('2d');
+  let W, H, pts = [];
+  const resize = () => {
+    W = c.width = innerWidth * devicePixelRatio; H = c.height = innerHeight * devicePixelRatio;
+    c.style.width = innerWidth + 'px'; c.style.height = innerHeight + 'px';
+    const n = Math.min(70, Math.floor(innerWidth / 18));
+    pts = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - .5) * .25 * devicePixelRatio, vy: (Math.random() - .5) * .25 * devicePixelRatio,
+    }));
+  };
+  resize(); addEventListener('resize', resize);
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const draw = () => {
+    ctx.clearRect(0, 0, W, H);
+    const D = 140 * devicePixelRatio;
+    for (let i = 0; i < pts.length; i++) {
+      const a = pts[i];
+      a.x += a.vx; a.y += a.vy;
+      if (a.x < 0 || a.x > W) a.vx *= -1;
+      if (a.y < 0 || a.y > H) a.vy *= -1;
+      for (let j = i + 1; j < pts.length; j++) {
+        const b = pts[j], d = Math.hypot(a.x - b.x, a.y - b.y);
+        if (d < D) {
+          ctx.strokeStyle = `rgba(0,170,255,${(1 - d / D) * .18})`;
+          ctx.lineWidth = devicePixelRatio;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+      }
+      ctx.fillStyle = 'rgba(0,200,255,.6)';
+      ctx.beginPath(); ctx.arc(a.x, a.y, 1.6 * devicePixelRatio, 0, 7); ctx.fill();
+    }
+    if (!still) requestAnimationFrame(draw);
+  };
+  draw();
+</script>
+</body>
+</html>
