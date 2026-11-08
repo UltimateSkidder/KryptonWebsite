@@ -334,8 +334,8 @@
       <h2>Ready to <span class="grad-text">level up?</span></h2>
       <p>Drop the .jar in your mods folder and launch. That's it.</p>
       <div class="dl-row">
-        <!-- Put your mod at krypton-site/downloads/Krypton.jar (or change this href to a hosted link) -->
-        <a href="downloads/Krypton.jar" download class="btn btn-primary" id="dlBtn">
+        <!-- Points at the jar in the downloads/ folder; change this href when you upload a new version -->
+        <a href="downloads/KryptonMC1.21.1.jar" download class="btn btn-primary" id="dlBtn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
           Download Krypton (.jar)
         </a>
@@ -397,7 +397,7 @@
     try {
       const r = await fetch(dlBtn.href, { method: 'HEAD' });
       if (r.ok) { location.href = dlBtn.href; return; }
-    } catch {}
+    } catch { location.href = dlBtn.href; return; } // can't check (e.g. opened from disk) - just try the download
     document.getElementById('dlNote').hidden = false;
   });
 
