@@ -344,9 +344,7 @@
           Join Discord
         </a>
       </div>
-      <div class="meta">Fabric<span>•</span>Minecraft 1.21.x<span>•</span>Free</div>
-      <div class="meta" id="dlNote" hidden style="color:#ffb547">The download isn't up yet — check back soon or join the Discord.</div>
-    </div>
+      <div class="meta">Fabric<span>•</span>Minecraft 1.21.x<span>•</span>Free</div>    </div>
   </div>
 </section>
 
@@ -388,18 +386,6 @@
   const links = document.getElementById('links');
   document.getElementById('menuBtn').onclick = () => links.classList.toggle('open');
   links.querySelectorAll('a').forEach(a => a.onclick = () => links.classList.remove('open'));
-
-  // jar download: if the file isn't there yet, show a note instead of a 404
-  const dlBtn = document.getElementById('dlBtn');
-  dlBtn.addEventListener('click', async e => {
-    if (!dlBtn.getAttribute('href').startsWith('downloads/')) return; // external link, just follow it
-    e.preventDefault();
-    try {
-      const r = await fetch(dlBtn.href, { method: 'HEAD' });
-      if (r.ok) { location.href = dlBtn.href; return; }
-    } catch { location.href = dlBtn.href; return; } // can't check (e.g. opened from disk) - just try the download
-    document.getElementById('dlNote').hidden = false;
-  });
 
   // ClickGUI demo
   const cats = {
